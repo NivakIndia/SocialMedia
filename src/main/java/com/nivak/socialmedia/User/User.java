@@ -23,7 +23,7 @@ public class User {
     private int verificationToken;
     private int forgetPassToken;
     private boolean accountIsVerified;
-    private String profilePic;
+    private String profileURL;
     private List<String> userFollowings;
     private List<String> userFollowers;
 }

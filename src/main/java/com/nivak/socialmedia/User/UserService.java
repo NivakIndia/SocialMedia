@@ -1,5 +1,8 @@
 package com.nivak.socialmedia.User;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
@@ -8,6 +11,7 @@ import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.nivak.socialmedia.Email.EmailService;
 import com.nivak.socialmedia.SMSservice.SMSService;
@@ -141,6 +145,70 @@ public class UserService {
                 emailService.forgetPassword(saveUsers);
                 return saveUsers;
             });
+        }
+    }
+
+    // Update Profile Image
+    private static final String PROFILE_DIR = "media/images/";
+
+    public void updateProfileImage(String userid, MultipartFile profileImage) throws IOException{
+        User user = userRepository.findByUserId(userid);
+        String desiredName = "";
+        if(isEmail(userid)){
+            String[] useridParts = userid.split("@");
+            desiredName = useridParts[0];
+        }
+        else{
+            desiredName = userid;
+        }
+        
+        String filePath = PROFILE_DIR+desiredName+".png";
+        String pathStored = PROFILE_DIR+desiredName+".png";
+        System.out.println(pathStored);
+        user.setProfileURL(pathStored);
+        userRepository.save(user);
+        
+
+
+        try {
+            File directory = new File(PROFILE_DIR);
+            if (!directory.exists()) {
+                if (directory.mkdirs()) {
+                    File file = new File(filePath);
+                    try (FileOutputStream fos = new FileOutputStream(file)) {
+                        fos.write(profileImage.getBytes());
+                    }
+
+                    if (file.exists()) {
+                        user.setProfileURL(pathStored);
+                        userRepository.save(user);
+                    }
+                }
+            } else {
+                File file = new File(filePath);
+                try (FileOutputStream fos = new FileOutputStream(file)) {
+                    fos.write(profileImage.getBytes());
+                }
+
+                if (file.exists()) {
+                        user.setProfileURL(pathStored);
+                        userRepository.save(user);
+                    }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void saveImage(MultipartFile file) throws IOException {
+        File directory = new File(PROFILE_DIR);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+
+        File newFile = new File(directory.getAbsolutePath() + "/" + file.getOriginalFilename());
+        try (FileOutputStream fos = new FileOutputStream(newFile)) {
+            fos.write(file.getBytes());
         }
     }
 }

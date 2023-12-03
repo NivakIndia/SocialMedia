@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.nivak.socialmedia.User.User;
 import com.nivak.socialmedia.User.UserRepository;
@@ -153,5 +154,18 @@ public class SocialMediaController {
     public ResponseEntity<List<User>> showAllUser(){
         return new ResponseEntity<>(userService.allUser(),HttpStatus.OK);
     }
+
+    // Upload Profile pic
+    @PostMapping("/profilepic/")
+    public ResponseEntity<String> uploadProfile(@RequestParam("userid") String userid,@RequestParam("profilepic") MultipartFile profilepic){
+        try {
+            userService.updateProfileImage(userid, profilepic);
+            return ResponseEntity.ok("profile pictrue updated");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error in profile picture update "+e);
+        }
+    }
+
+
 
 }
