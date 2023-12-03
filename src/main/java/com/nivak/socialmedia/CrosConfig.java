@@ -12,7 +12,10 @@ public class CrosConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry corsRegistry){
-                corsRegistry.addMapping("/**").allowedOrigins("https://nivakmedia.onrender.com/");
+                corsRegistry.addMapping("/**")
+                .allowedOrigins("https://nivakmedia.netlify.app")
+                .allowedMethods("GET", "POST", "PUT", "DELETE")
+                .allowedHeaders("*");
             }
         };
     }
