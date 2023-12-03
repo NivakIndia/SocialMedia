@@ -12,7 +12,7 @@ public class CrosConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry corsRegistry){
-                corsRegistry.addMapping("/**").allowedOrigins("http://localhost:3000");
+                corsRegistry.addMapping("/**").allowedOrigins("https://nivakmedia.onrender.com/");
             }
         };
     }
