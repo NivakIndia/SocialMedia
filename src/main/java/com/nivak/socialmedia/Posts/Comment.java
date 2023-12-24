@@ -10,8 +10,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Comment {
-    private String commentEmail;
-    private String commentContent;
+    private int commentId;
+    private String commenterUserId;
+    private String commentMessage;
     private String commentDate;
     private String commentTime;
     private List<String> commentLikes;

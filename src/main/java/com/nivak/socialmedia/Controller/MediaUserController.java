@@ -1,7 +1,11 @@
-package com.nivak.socialmedia;
+package com.nivak.socialmedia.Controller;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,14 +18,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.nivak.socialmedia.Cloud.CloudService;
 import com.nivak.socialmedia.User.User;
 import com.nivak.socialmedia.User.UserRepository;
 import com.nivak.socialmedia.User.UserService;
 
 
+
+
+
 @Controller
 @RequestMapping("/nivak/media")
-public class SocialMediaController {
+public class MediaUserController {
 
     // initializing fields
     @Autowired
@@ -29,6 +37,9 @@ public class SocialMediaController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private CloudService cloudService;
     
     // Otp Generator
     public static int generateOtp(){
@@ -37,6 +48,14 @@ public class SocialMediaController {
 
         Random random = new Random();
         return random.nextInt(max-min+1)+min;
+    }
+
+    // To Check Email
+    public static boolean isEmail(String email) {
+        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+        Pattern pattern = Pattern.compile(emailRegex);
+        Matcher matcher = pattern.matcher(email);
+        return matcher.matches();
     }
 
 
@@ -52,6 +71,8 @@ public class SocialMediaController {
             int verificationToken = generateOtp();
             user.setVerificationToken(verificationToken);
             user.setAccountIsVerified(false);
+            user.setUserFollowers(new ArrayList<>());
+            user.setUserFollowings(new ArrayList<>());
             try {
                 userService.sendVerification(user, userid, verificationToken,code);
                 return ResponseEntity.ok("Registration successfull");
@@ -143,10 +164,16 @@ public class SocialMediaController {
         }
     }
 
-    // Return user by email
+    // Return user by userid
     @GetMapping("/byuserid/{userid}/")
     public ResponseEntity<User> byUserid(@PathVariable("userid") String userid){
         return new ResponseEntity<User>(userService.byUserId(userid), HttpStatus.OK);
+    }
+
+    // Return user by userid
+    @GetMapping("/byusername/{username}/")
+    public ResponseEntity<User> byUserName(@PathVariable("username") String username){
+        return new ResponseEntity<User>(userService.byUserName(username), HttpStatus.OK);
     }
 
     // Return all user
@@ -157,15 +184,83 @@ public class SocialMediaController {
 
     // Upload Profile pic
     @PostMapping("/profilepic/")
-    public ResponseEntity<String> uploadProfile(@RequestParam("userid") String userid,@RequestParam("profilepic") MultipartFile profilepic){
+    public ResponseEntity<String> uploadFile(@RequestParam("image") MultipartFile profileImage, @RequestParam("userid") String userid) throws IOException{
+        
         try {
-            userService.updateProfileImage(userid, profilepic);
-            return ResponseEntity.ok("profile pictrue updated");
+            User user = userService.byUserId(userid);
+            String profileurl = user.getProfileURL();
+
+            String imageName = "";
+            if (isEmail(userid)) {
+                String[] userIdParts = userid.split("@");
+                imageName = userIdParts[0];
+            } else {
+                imageName = userid;
+            }
+
+            if (profileurl == null || profileurl=="") {
+                String imageURL = cloudService.profileImage(profileImage,imageName);
+                user.setProfileURL(imageURL);
+                userRepository.save(user);
+                System.out.println(imageURL);
+            } else {
+                cloudService.deleteProfileImage(profileurl);
+                String imageURL = cloudService.profileImage(profileImage,imageName);
+                user.setProfileURL(imageURL);
+                userRepository.save(user);
+                System.out.println(imageURL);
+            }
+            return ResponseEntity.ok("Success");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error in profile picture update "+e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Unsuccess: "+e);
         }
     }
 
 
+    // Biometric update
+    @PostMapping("/biometric/")
+    public ResponseEntity<String> biometricUpdate(@RequestParam("userid") String userid,@RequestParam(value = "bio", required = false) String bio,@RequestParam(value = "gender",required = false) String gender){
+        try {
+            User user = userService.byUserId(userid);
+            if (bio != null) {
+                user.setUserBio(bio);
+            }
+            if (gender != null) {
+                user.setGender(gender);
+            }
+            userRepository.save(user);
+            return ResponseEntity.ok("Biometric Updated");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Biometric Cant be Updated: " + e);
+        }
+    }
 
+    // User Friend 
+    @PostMapping("/userfriend/")
+    public ResponseEntity<String> userFriend(@RequestParam("userid") String userid, @RequestParam("userfriendid") String userFriendid) {
+        try {
+            User user = userService.byUserId(userid);
+            User userFriend = userService.byUserId(userFriendid);
+            List<String> friendFollower = userFriend.getUserFollowers();
+            List<String> following = user.getUserFollowings();
+            System.out.println(userFriend);
+
+            if (!following.contains(userFriendid)) {
+                following.add(userFriendid);
+                friendFollower.add(userid);
+            } else {
+                following.remove(userFriendid);
+                friendFollower.remove(userid);
+            }
+            
+            user.setUserFollowings(following);
+            userFriend.setUserFollowers(friendFollower);
+            userRepository.save(user);
+            userRepository.save(userFriend);
+            return ResponseEntity.ok("User Friend Status: Successfull");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("User Friend status: "+e);
+        }
+    }
+    
 }

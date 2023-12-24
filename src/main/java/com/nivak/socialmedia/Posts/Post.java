@@ -17,7 +17,8 @@ public class Post {
     private ObjectId id;
     private int postId;
     private String userId;
-    private String postPath;
+    private String postURL;
+    private String postCoverURL;
     private String postDescription;
     private String postDate;
     private String postTime;

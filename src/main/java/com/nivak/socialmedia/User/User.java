@@ -26,4 +26,6 @@ public class User {
     private String profileURL;
     private List<String> userFollowings;
     private List<String> userFollowers;
+    private String userBio;
+    private String gender;
 }
