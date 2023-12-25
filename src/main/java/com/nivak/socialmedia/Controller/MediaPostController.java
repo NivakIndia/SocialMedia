@@ -2,6 +2,7 @@ package com.nivak.socialmedia.Controller;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -66,13 +67,17 @@ public class MediaPostController {
                 folderName += "Post/"+userid;
             }
             String postURL = cloudService.postUpload(postFile,folderName,UUID.randomUUID().toString());
+
+            LocalDate currentDate = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+            LocalTime currentTime = LocalTime.now(ZoneId.of("Asia/Kolkata"));
+
             
             newPost.setPostId(post.size()+1);
             newPost.setUserId(userid);
             newPost.setPostURL(postURL);
             newPost.setPostDescription(description);
-            newPost.setPostDate(LocalDate.now().toString());
-            newPost.setPostTime(LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")).toString());
+            newPost.setPostDate(currentDate.toString());
+            newPost.setPostTime(currentTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")).toString());
             newPost.setPostLikes(new ArrayList<>());
 
             postRepository.save(newPost);
@@ -137,12 +142,15 @@ public class MediaPostController {
                 comments = new ArrayList<>();
             }
 
+            LocalDate currentDate = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+            LocalTime currentTime = LocalTime.now(ZoneId.of("Asia/Kolkata"));
+
             Comment commentContent = new Comment();
             commentContent.setCommentId(comments.size()+1);
             commentContent.setCommenterUserId(userid);
             commentContent.setCommentMessage(comment);
-            commentContent.setCommentDate(LocalDate.now().toString());
-            commentContent.setCommentTime(LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")).toString());
+            commentContent.setCommentDate(currentDate.toString());
+            commentContent.setCommentTime(currentTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")).toString());
             commentContent.setCommentLikes(new ArrayList<>());
             commentContent.setCommentReplies(new ArrayList<>());
             comments.add(commentContent);
@@ -204,10 +212,13 @@ public class MediaPostController {
             
             CommentReply replycomment = new CommentReply();
 
+            LocalDate currentDate = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+            LocalTime currentTime = LocalTime.now(ZoneId.of("Asia/Kolkata"));
+
             replycomment.setReplyId(commentReply.size()+1);
             replycomment.setReplyerUserId(userid);
-            replycomment.setReplyDate(LocalDate.now().toString());
-            replycomment.setReplyTime(LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")).toString());
+            replycomment.setReplyDate(currentDate.toString());
+            replycomment.setReplyTime(currentTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")).toString());
             replycomment.setReplyMessage(commentmsg);
             replycomment.setReplyLikes(new ArrayList<>());
             commentReply.add(replycomment);
