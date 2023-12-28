@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,6 +28,10 @@ import com.nivak.socialmedia.Posts.CommentReply;
 import com.nivak.socialmedia.Posts.Post;
 import com.nivak.socialmedia.Posts.PostRepository;
 import com.nivak.socialmedia.Posts.PostService;
+import com.nivak.socialmedia.User.Notification;
+import com.nivak.socialmedia.User.User;
+import com.nivak.socialmedia.User.UserRepository;
+import com.nivak.socialmedia.User.UserService;
 
 
 
@@ -35,6 +40,11 @@ import com.nivak.socialmedia.Posts.PostService;
 public class MediaPostController {
     // initializing fields
     @Autowired
+    private UserService userService;
+
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
     private PostService postService;
 
     @Autowired
@@ -42,6 +52,9 @@ public class MediaPostController {
 
     @Autowired
     private CloudService cloudService;
+
+    @Autowired
+    private SimpMessagingTemplate simpMessagingTemplate;
 
     // userid is Email
     public static boolean isEmail(String email) {
@@ -119,9 +132,23 @@ public class MediaPostController {
                 likes.remove(userid);
             } else {
                 likes.add(userid);
+                
+                // Notification
+                User postLiker = userService.byUserId(userid);
+                User notifyUser = userService.byUserId(post.getUserId());
+                List<Notification> notifications = notifyUser.getNotification();
+                Notification notifi = new Notification();
+                notifi.setNotificationId(notifications.size()+1);
+                notifi.setNotification(postLiker.getUserName()+" is liked a post\n "+post.getPostDescription());
+                notifi.setSeen(false);
+                notifications.add(notifi);
+                notifyUser.setNotification(notifications);
+                userRepository.save(notifyUser);
             }
             post.setPostLikes(likes);
             postRepository.save(post);
+            
+            simpMessagingTemplate.convertAndSend("/function/intraction", "Post Instaction: "+postid);
             return ResponseEntity.ok("Intraction Successfull");
         } catch (NumberFormatException e) {
             System.out.println("Invalid Post ID");
@@ -157,6 +184,7 @@ public class MediaPostController {
 
             post.setPostComments(comments);
             postRepository.save(post);
+            simpMessagingTemplate.convertAndSend("/function/postcomment", "Post Comment: "+postid);
             return ResponseEntity.ok("Intraction Successfull");
         } catch (NumberFormatException e) {
             System.out.println("Invalid Post ID");
@@ -194,6 +222,7 @@ public class MediaPostController {
             post.setPostComments(comments);
             postRepository.save(post);
 
+            simpMessagingTemplate.convertAndSend("/function/commentintraction", "Post commentintraction: "+postid);
             return ResponseEntity.ok("Comment Intraction Successfull"+comments);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Comment Intraction Successfull");
@@ -233,6 +262,7 @@ public class MediaPostController {
 
             post.setPostComments(comments);
             postRepository.save(post);
+            simpMessagingTemplate.convertAndSend("/function/postreplycomment", "Post reply comment: "+postid);
             return ResponseEntity.ok("Post Comment Reply Successfull");
         } catch (NumberFormatException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid ID");
@@ -276,7 +306,7 @@ public class MediaPostController {
 
             post.setPostComments(comments);
             postRepository.save(post);
-
+            simpMessagingTemplate.convertAndSend("/function/replycommentintraction", "Post reply comment intraction: "+postid);
             return ResponseEntity.ok("Comment Intraction Successfull"+post);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Comment Intraction Successfull");

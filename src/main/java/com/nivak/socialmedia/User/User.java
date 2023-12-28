@@ -28,4 +28,6 @@ public class User {
     private List<String> userFollowers;
     private String userBio;
     private String gender;
+    private List<Integer> savedPost;
+    private List<Notification> notification;
 }

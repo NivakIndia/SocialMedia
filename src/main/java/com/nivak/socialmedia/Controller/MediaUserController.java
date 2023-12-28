@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.nivak.socialmedia.Cloud.CloudService;
+import com.nivak.socialmedia.User.Notification;
 import com.nivak.socialmedia.User.User;
 import com.nivak.socialmedia.User.UserRepository;
 import com.nivak.socialmedia.User.UserService;
@@ -202,13 +203,11 @@ public class MediaUserController {
                 String imageURL = cloudService.profileImage(profileImage,imageName);
                 user.setProfileURL(imageURL);
                 userRepository.save(user);
-                System.out.println(imageURL);
             } else {
                 cloudService.deleteProfileImage(profileurl);
                 String imageURL = cloudService.profileImage(profileImage,imageName);
                 user.setProfileURL(imageURL);
                 userRepository.save(user);
-                System.out.println(imageURL);
             }
             return ResponseEntity.ok("Success");
         } catch (Exception e) {
@@ -243,16 +242,29 @@ public class MediaUserController {
             User userFriend = userService.byUserId(userFriendid);
             List<String> friendFollower = userFriend.getUserFollowers();
             List<String> following = user.getUserFollowings();
-            System.out.println(userFriend);
 
             if (!following.contains(userFriendid)) {
                 following.add(userFriendid);
                 friendFollower.add(userid);
+
+                // Notification
+                List<Notification> notifications = userFriend.getNotification();
+                if(notifications == null){
+                    notifications = new ArrayList<>();
+                }
+                Notification notifi = new Notification();
+                notifi.setNotificationId(notifications.size()+1);
+                notifi.setNotification(user.getUserName()+" is now Following you");
+                notifi.setSeen(false);
+                System.out.println(notifi);
+                notifications.add(notifi);
+                userFriend.setNotification(notifications);
+            
             } else {
                 following.remove(userFriendid);
                 friendFollower.remove(userid);
             }
-            
+
             user.setUserFollowings(following);
             userFriend.setUserFollowers(friendFollower);
             userRepository.save(user);
@@ -263,4 +275,28 @@ public class MediaUserController {
         }
     }
     
+    // Save Post
+    @PostMapping("/savepost/")
+    public ResponseEntity<String> savePost(@RequestParam("userid") String userid, @RequestParam("postid") Integer postId){
+        try {
+            User user = userService.byUserId(userid);
+            List<Integer> savedPost = user.getSavedPost();
+            if (savedPost == null) {
+                savedPost = new ArrayList<>();
+            }
+
+            if (savedPost.contains(postId)) {
+                savedPost.remove(postId);
+            } else {
+                savedPost.add(postId);
+            }
+
+            user.setSavedPost(savedPost);
+            userRepository.save(user);
+
+            return ResponseEntity.ok("Post save and unsave status: successfull");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Post save and unsave status: "+e);
+        }
+    }
 }
