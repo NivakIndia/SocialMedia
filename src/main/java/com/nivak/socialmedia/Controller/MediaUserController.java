@@ -1,6 +1,10 @@
 package com.nivak.socialmedia.Controller;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -10,6 +14,7 @@ import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,6 +38,8 @@ import com.nivak.socialmedia.User.UserService;
 public class MediaUserController {
 
     // initializing fields
+    @Autowired
+    private SimpMessagingTemplate simpMessagingTemplate;
     @Autowired
     private UserService userService;
 
@@ -248,17 +255,24 @@ public class MediaUserController {
                 friendFollower.add(userid);
 
                 // Notification
-                List<Notification> notifications = userFriend.getNotification();
+                LocalDate currentDate = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+                LocalTime currentTime = LocalTime.now(ZoneId.of("Asia/Kolkata"));
+
+                List<Notification> notifications = userFriend.getNotifications();
                 if(notifications == null){
                     notifications = new ArrayList<>();
                 }
                 Notification notifi = new Notification();
                 notifi.setNotificationId(notifications.size()+1);
-                notifi.setNotification(user.getUserName()+" is now Following you");
+                notifi.setNotificationMessage(user.getUserName()+" is now Following you");
                 notifi.setSeen(false);
+                notifi.setNotificationDate(currentDate.toString());
+                notifi.setNotificationTime(currentTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")).toString());
+                notifi.setUserId(user.getUserId());
                 System.out.println(notifi);
                 notifications.add(notifi);
-                userFriend.setNotification(notifications);
+                userFriend.setNotifications(notifications);
+                simpMessagingTemplate.convertAndSend("/function/notification", "Notification");
             
             } else {
                 following.remove(userFriendid);
@@ -297,6 +311,27 @@ public class MediaUserController {
             return ResponseEntity.ok("Post save and unsave status: successfull");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Post save and unsave status: "+e);
+        }
+    }
+
+    // Notification seen
+    @PostMapping("/notificationseen/")
+    public ResponseEntity<String> notificationSeen(@RequestParam("userid") String userid, @RequestParam("notificationid") int notificationid){
+        try {
+            User user = userService.byUserId(userid);
+            List<Notification> notifications = user.getNotifications();
+            for (Notification notification : notifications) {
+                if(notification.getNotificationId() == notificationid){
+                    notification.setSeen(true);
+                }
+            }
+
+            user.setNotifications(notifications);
+            userRepository.save(user);
+            simpMessagingTemplate.convertAndSend("/function/notification", "Notification");
+            return ResponseEntity.ok("Notification status: successfull");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Notification status: "+e);
         }
     }
 }

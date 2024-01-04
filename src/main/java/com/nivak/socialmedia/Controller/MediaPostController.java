@@ -134,16 +134,25 @@ public class MediaPostController {
                 likes.add(userid);
                 
                 // Notification
+                LocalDate currentDate = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+                LocalTime currentTime = LocalTime.now(ZoneId.of("Asia/Kolkata"));
+
                 User postLiker = userService.byUserId(userid);
                 User notifyUser = userService.byUserId(post.getUserId());
-                List<Notification> notifications = notifyUser.getNotification();
-                Notification notifi = new Notification();
-                notifi.setNotificationId(notifications.size()+1);
-                notifi.setNotification(postLiker.getUserName()+" is liked a post\n "+post.getPostDescription());
-                notifi.setSeen(false);
-                notifications.add(notifi);
-                notifyUser.setNotification(notifications);
-                userRepository.save(notifyUser);
+                if (!postLiker.getUserId().equals(notifyUser.getUserId())) {
+                    List<Notification> notifications = notifyUser.getNotifications();
+                    Notification notifi = new Notification();
+                    notifi.setNotificationId(notifications.size()+1);
+                    notifi.setPostid(postid);
+                    notifi.setNotificationMessage(postLiker.getUserName()+" is liked your post");
+                    notifi.setSeen(false);
+                    notifi.setNotificationDate(currentDate.toString());
+                    notifi.setNotificationTime(currentTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")).toString());
+                    notifications.add(notifi);
+                    notifyUser.setNotifications(notifications);
+                    userRepository.save(notifyUser);
+                    simpMessagingTemplate.convertAndSend("/function/notification", "Post Instaction: "+postid);
+                }
             }
             post.setPostLikes(likes);
             postRepository.save(post);
@@ -184,6 +193,25 @@ public class MediaPostController {
 
             post.setPostComments(comments);
             postRepository.save(post);
+
+            // Notification
+            User commentUser = userService.byUserId(userid);
+            User notifyUser = userService.byUserId(post.getUserId());
+            if(!commentUser.getUserId().equals(notifyUser.getUserId())){
+                List<Notification> notifications = notifyUser.getNotifications();
+                Notification notifi = new Notification();
+                notifi.setNotificationId(notifications.size()+1);
+                notifi.setPostid(postid);
+                notifi.setNotificationMessage(commentUser.getUserName()+" has commented your post");
+                notifi.setSeen(false);
+                notifi.setNotificationDate(currentDate.toString());
+                notifi.setNotificationTime(currentTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")).toString());
+                notifications.add(notifi);
+                notifyUser.setNotifications(notifications);
+                userRepository.save(notifyUser);
+            }
+
+            simpMessagingTemplate.convertAndSend("/function/notification", "Notification");
             simpMessagingTemplate.convertAndSend("/function/postcomment", "Post Comment: "+postid);
             return ResponseEntity.ok("Intraction Successfull");
         } catch (NumberFormatException e) {
@@ -208,6 +236,27 @@ public class MediaPostController {
                 commentLikes.remove(userid);
             }else{
                 commentLikes.add(userid);
+                // Notification
+                LocalDate currentDate = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+                LocalTime currentTime = LocalTime.now(ZoneId.of("Asia/Kolkata"));
+
+                User commentLiker = userService.byUserId(userid);
+                User notifyUser = userService.byUserId(comment.getCommenterUserId());
+                if(!commentLiker.getUserId().equals(notifyUser.getUserId())){
+                    List<Notification> notifications = notifyUser.getNotifications();
+                    Notification notifi = new Notification();
+                    notifi.setNotificationId(notifications.size()+1);
+                    notifi.setPostid(postid);
+                    notifi.setNotificationMessage(commentLiker.getUserName()+" has liked your comment");
+                    notifi.setSeen(false);
+                    notifi.setNotificationDate(currentDate.toString());
+                    notifi.setNotificationTime(currentTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")).toString());
+                    notifications.add(notifi);
+                    notifyUser.setNotifications(notifications);
+                    userRepository.save(notifyUser);
+                    simpMessagingTemplate.convertAndSend("/function/notification", "Notification");
+                }
+
             }
             
             comment.setCommentLikes(commentLikes);
@@ -262,6 +311,25 @@ public class MediaPostController {
 
             post.setPostComments(comments);
             postRepository.save(post);
+
+            // Notification
+            User commentReplier = userService.byUserId(userid);
+            User notifyUser = userService.byUserId(comment.getCommenterUserId());
+            if(!commentReplier.getUserId().equals(notifyUser.getUserId())){
+                List<Notification> notifications = notifyUser.getNotifications();
+                Notification notifi = new Notification();
+                notifi.setNotificationId(notifications.size()+1);
+                notifi.setPostid(postid);
+                notifi.setNotificationMessage(commentReplier.getUserName()+" has repliyed to your comment");
+                notifi.setSeen(false);
+                notifi.setNotificationDate(currentDate.toString());
+                notifi.setNotificationTime(currentTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")).toString());
+                notifications.add(notifi);
+                notifyUser.setNotifications(notifications);
+                userRepository.save(notifyUser);
+            }
+
+            simpMessagingTemplate.convertAndSend("/function/notification", "Notification");
             simpMessagingTemplate.convertAndSend("/function/postreplycomment", "Post reply comment: "+postid);
             return ResponseEntity.ok("Post Comment Reply Successfull");
         } catch (NumberFormatException e) {
@@ -285,6 +353,27 @@ public class MediaPostController {
                 replyLike.remove(userid);
             } else {
                 replyLike.add(userid);
+                // Notification
+                LocalDate currentDate = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+                LocalTime currentTime = LocalTime.now(ZoneId.of("Asia/Kolkata"));
+
+                User commentLiker = userService.byUserId(userid);
+                User notifyUser = userService.byUserId(commentReply.getReplyerUserId());
+                if (!commentLiker.getUserId().equals(notifyUser.getUserId())) {
+                    List<Notification> notifications = notifyUser.getNotifications();
+                    Notification notifi = new Notification();
+                    notifi.setNotificationId(notifications.size()+1);
+                    notifi.setPostid(postid);
+                    notifi.setNotificationMessage(commentLiker.getUserName()+" has liked your reply");
+                    notifi.setSeen(false);
+                    notifi.setNotificationDate(currentDate.toString());
+                    notifi.setNotificationTime(currentTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")).toString());
+                    notifications.add(notifi);
+                    notifyUser.setNotifications(notifications);
+                    userRepository.save(notifyUser);
+                    simpMessagingTemplate.convertAndSend("/function/notification", "Notification");
+                }
+
             }
             commentReply.setReplyLikes(replyLike);
             

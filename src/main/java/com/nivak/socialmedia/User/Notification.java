@@ -9,6 +9,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Notification {
     private int notificationId;
-    private String notification;
+    private int postid;
+    private String userId;
+    private String notificationMessage;
     private boolean seen;
+    private String notificationDate;
+    private String notificationTime;
 }

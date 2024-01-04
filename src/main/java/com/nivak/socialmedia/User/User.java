@@ -29,5 +29,5 @@ public class User {
     private String userBio;
     private String gender;
     private List<Integer> savedPost;
-    private List<Notification> notification;
+    private List<Notification> notifications;
 }
