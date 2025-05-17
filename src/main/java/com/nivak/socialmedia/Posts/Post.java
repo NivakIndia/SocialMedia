@@ -15,7 +15,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Post {
     private ObjectId id;
-    private int postId;
     private String userId;
     private String postURL;
     private String postCoverURL;
@@ -23,5 +22,11 @@ public class Post {
     private String postDate;
     private String postTime;
     private List<String> postLikes;
+    private int postCommentId;
     private List<Comment> postComments;
+
+
+    public String getId() {
+        return id.toHexString();
+    }
 }

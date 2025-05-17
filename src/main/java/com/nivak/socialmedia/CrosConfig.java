@@ -13,8 +13,8 @@ public class CrosConfig {
             @Override
             public void addCorsMappings(CorsRegistry corsRegistry){
                 corsRegistry.addMapping("/**")
-                .allowedOrigins("https://nivakmedia.netlify.app")
-                //.allowedOrigins("http://localhost:3000")
+                //.allowedOrigins("https://nivakmedia.netlify.app")
+                .allowedOrigins("http://localhost:3000")
                 .allowedMethods("GET", "POST", "PUT", "DELETE")
                 .allowedHeaders("*");
             }

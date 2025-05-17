@@ -28,6 +28,12 @@ public class User {
     private List<String> userFollowers;
     private String userBio;
     private String gender;
-    private List<Integer> savedPost;
+    private List<String> savedPost;
+
+    private int notificationId;
     private List<Notification> notifications;
+
+    public String getId() {
+        return id.toHexString();
+    }
 }

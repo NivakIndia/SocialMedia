@@ -16,5 +16,6 @@ public class Comment {
     private String commentDate;
     private String commentTime;
     private List<String> commentLikes;
+    private int replyId;
     private List<CommentReply> commentReplies; 
 }

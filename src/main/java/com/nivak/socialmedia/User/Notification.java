@@ -8,11 +8,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Notification {
-    private int notificationId;
-    private int postid;
+    private int id;
+    private String postId;
     private String userId;
+    private int commentId;
     private String notificationMessage;
-    private boolean seen;
+    private boolean isSeen;
     private String notificationDate;
     private String notificationTime;
 }
